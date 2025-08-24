@@ -20,6 +20,10 @@ yarn.lock
 .env.test.local
 .env.production.local
 
+# Test files for environment setup
+test-*.html
+.env.local
+
 # IDE and Editor files
 .vscode/
 .idea/
