@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubinix - Local Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Loading Screen -->
+        <div id="loading" class="loading-container" style="display: block;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Initializing demo...</p>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="login-container" style="display: none;">
+            <div class="login-card card">
+                <div class="card__header">
+                    <h1>Personal Dashboard</h1>
+                    <p>Manage your daily activities in one place</p>
+                </div>
+                <div class="card__body">
+                    <div>
+                        <h2>Demo Mode</h2>
+                        <p>Experience the dashboard without Firebase setup</p>
+                        <button onclick="enterDemo()" class="btn btn--primary btn--full-width">Enter Demo</button>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                            For full functionality, set up Firebase configuration as described in README.md
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <header class="header">
+                <div class="header__content">
+                    <h1>Personal Dashboard</h1>
+                    <button onclick="logout()" class="btn btn--outline">Logout</button>
+                </div>
+            </header>
+            
+            <div class="container">
+                <nav class="sidebar">
+                    <div class="nav-menu">
+                        <button onclick="setModule('summary')" class="nav-item active" id="nav-summary">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-label">Summary</span>
+                        </button>
+                        <button onclick="setModule('diary')" class="nav-item" id="nav-diary">
+                            <span class="nav-icon">📔</span>
+                            <span class="nav-label">Diary</span>
+                        </button>
+                        <button onclick="setModule('mood')" class="nav-item" id="nav-mood">
+                            <span class="nav-icon">😊</span>
+                            <span class="nav-label">Mood</span>
+                        </button>
+                        <button onclick="setModule('expenses')" class="nav-item" id="nav-expenses">
+                            <span class="nav-icon">💰</span>
+                            <span class="nav-label">Expenses</span>
+                        </button>
+                    </div>
+                </nav>
+
+                <main class="main-content">
+                    <!-- Summary Module -->
+                    <div id="module-summary" class="module">
+                        <div class="module-header">
+                            <h2>Dashboard Summary</h2>
+                            <p>Overview of your daily activities</p>
+                        </div>
+                        <div class="summary-grid">
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Diary Entries</h3>
+                                    <div class="summary-stat" id="diary-count">3 entries</div>
+                                    <p>Recent activity recorded</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Current Mood</h3>
+                                    <div class="summary-stat">😊</div>
+                                    <p>Feeling good today</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Month Expenses</h3>
+                                    <div class="summary-stat">₹2,450</div>
+                                    <p>Total spending this month</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>This Week</h3>
+                                    <div class="summary-stat">5</div>
+                                    <p>Activities completed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <span class="activity-icon">📔</span>
+                                <div class="activity-content">
+                                    <div class="activity-title">New diary entry</div>
+                                    <div class="activity-date">Today</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon">💰</span>
+                                <div class="activity-content">
+                                    <div class="activity-title">Expense: ₹150</div>
+                                    <div class="activity-date">Yesterday</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diary Module -->
+                    <div id="module-diary" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Daily Diary</h2>
+                            <p>Record your daily thoughts and experiences</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Write New Entry</h3>
+                            </div>
+                            <div class="card__body">
+                                <form onsubmit="saveDiaryEntry(event)">
+                                    <div class="form-group">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" id="diary-date" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" id="diary-title" class="form-control" placeholder="Entry title" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Content</label>
+                                        <textarea id="diary-content" class="form-control" rows="6" placeholder="Write your thoughts..."></textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn--primary">Save Entry</button>
+                                        <button type="button" onclick="clearDiaryForm()" class="btn btn--outline">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <h3>Recent Entries</h3>
+                        <div id="diary-entries" class="entries-list">
+                            <div class="entry-item card">
+                                <div class="card__body">
+                                    <h4>Great day today!</h4>
+                                    <p class="entry-date">2024-08-24</p>
+                                    <p>Had a wonderful day working on projects and spending time with family.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mood Module -->
+                    <div id="module-mood" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Mood Tracker</h2>
+                            <p>Track your daily emotional well-being</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Record Your Mood</h3>
+                            </div>
+                            <div class="card__body">
+                                <form onsubmit="saveMoodEntry(event)">
+                                    <div class="form-group">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" id="mood-date" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">How are you feeling?</label>
+                                        <div class="mood-selector">
+                                            <button type="button" onclick="selectMood(1, '😢')" class="mood-option">
+                                                <span class="mood-emoji">😢</span>
+                                                <span class="mood-rating">1</span>
+                                                <span class="mood-label">Very Sad</span>
+                                            </button>
+                                            <button type="button" onclick="selectMood(5, '😐')" class="mood-option">
+                                                <span class="mood-emoji">😐</span>
+                                                <span class="mood-rating">5</span>
+                                                <span class="mood-label">Neutral</span>
+                                            </button>
+                                            <button type="button" onclick="selectMood(8, '😊')" class="mood-option">
+                                                <span class="mood-emoji">😊</span>
+                                                <span class="mood-rating">8</span>
+                                                <span class="mood-label">Happy</span>
+                                            </button>
+                                            <button type="button" onclick="selectMood(10, '🤩')" class="mood-option">
+                                                <span class="mood-emoji">🤩</span>
+                                                <span class="mood-rating">10</span>
+                                                <span class="mood-label">Ecstatic</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Notes (optional)</label>
+                                        <textarea id="mood-notes" class="form-control" rows="3" placeholder="Any additional thoughts..."></textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn--primary">Save Mood</button>
+                                        <button type="button" onclick="clearMoodForm()" class="btn btn--outline">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expenses Module -->
+                    <div id="module-expenses" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Expense Tracker</h2>
+                            <p>Keep track of your spending habits</p>
+                        </div>
+                        
+                        <div class="expense-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">Total Expenses</span>
+                                <span class="summary-value">₹2,450</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">This Month</span>
+                                <span class="summary-value">₹1,200</span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Add New Expense</h3>
+                            </div>
+                            <div class="card__body">
+                                <form onsubmit="saveExpense(event)">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" id="expense-date" class="form-control" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Amount (₹)</label>
+                                            <input type="number" id="expense-amount" class="form-control" step="0.01" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Category</label>
+                                            <select id="expense-category" class="form-control" required>
+                                                <option value="">Select category</option>
+                                                <option value="Food">Food</option>
+                                                <option value="Transport">Transport</option>
+                                                <option value="Entertainment">Entertainment</option>
+                                                <option value="Utilities">Utilities</option>
+                                                <option value="Shopping">Shopping</option>
+                                                <option value="Healthcare">Healthcare</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Description</label>
+                                            <input type="text" id="expense-description" class="form-control" placeholder="What did you spend on?">
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn--primary">Add Expense</button>
+                                        <button type="button" onclick="clearExpenseForm()" class="btn btn--outline">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <h3>Recent Expenses</h3>
+                        <div id="expense-entries" class="entries-list">
+                            <div class="expense-item card">
+                                <div class="card__body">
+                                    <div class="expense-header">
+                                        <h4>₹150 - Food</h4>
+                                        <span class="expense-date">2024-08-24</span>
+                                    </div>
+                                    <p>Lunch at restaurant</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo application state
+        const demoState = {
+            currentModule: 'summary',
+            isAuthenticated: false,
+            selectedMood: null,
+            diaryEntries: [
+                { id: 1, title: 'Great day today!', date: '2024-08-24', content: 'Had a wonderful day working on projects and spending time with family.' }
+            ],
+            expenses: [
+                { id: 1, amount: 150, category: 'Food', description: 'Lunch at restaurant', date: '2024-08-24' }
+            ]
+        };
+
+        function showElement(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function hideAllElements(ids) {
+            ids.forEach(id => hideElement(id));
+        }
+
+        function enterDemo() {
+            hideElement('login-screen');
+            showElement('dashboard');
+            demoState.isAuthenticated = true;
+            console.log('Entered demo mode');
+        }
+
+        function logout() {
+            hideElement('dashboard');
+            showElement('login-screen');
+            demoState.isAuthenticated = false;
+            console.log('Logged out of demo');
+        }
+
+        function setModule(module) {
+            // Hide all modules
+            document.querySelectorAll('.module').forEach(m => m.style.display = 'none');
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Show selected module
+            showElement('module-' + module);
+            // Add active class to selected nav item
+            document.getElementById('nav-' + module).classList.add('active');
+            
+            demoState.currentModule = module;
+            console.log('Switched to module:', module);
+        }
+
+        function selectMood(rating, emoji) {
+            // Remove selected class from all mood options
+            document.querySelectorAll('.mood-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            event.target.closest('.mood-option').classList.add('selected');
+            
+            demoState.selectedMood = { rating, emoji };
+            console.log('Selected mood:', rating, emoji);
+        }
+
+        function saveDiaryEntry(event) {
+            event.preventDefault();
+            const title = document.getElementById('diary-title').value;
+            const content = document.getElementById('diary-content').value;
+            const date = document.getElementById('diary-date').value;
+
+            if (title && content) {
+                console.log('Demo: Saving diary entry', { title, content, date });
+                alert('Diary entry saved! (Demo mode - not persisted)');
+                clearDiaryForm();
+            }
+        }
+
+        function clearDiaryForm() {
+            document.getElementById('diary-title').value = '';
+            document.getElementById('diary-content').value = '';
+            document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        function saveMoodEntry(event) {
+            event.preventDefault();
+            const notes = document.getElementById('mood-notes').value;
+            const date = document.getElementById('mood-date').value;
+
+            if (demoState.selectedMood) {
+                console.log('Demo: Saving mood entry', { ...demoState.selectedMood, notes, date });
+                alert('Mood entry saved! (Demo mode - not persisted)');
+                clearMoodForm();
+            } else {
+                alert('Please select a mood rating first');
+            }
+        }
+
+        function clearMoodForm() {
+            document.getElementById('mood-notes').value = '';
+            document.getElementById('mood-date').value = new Date().toISOString().split('T')[0];
+            document.querySelectorAll('.mood-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            demoState.selectedMood = null;
+        }
+
+        function saveExpense(event) {
+            event.preventDefault();
+            const amount = document.getElementById('expense-amount').value;
+            const category = document.getElementById('expense-category').value;
+            const description = document.getElementById('expense-description').value;
+            const date = document.getElementById('expense-date').value;
+
+            if (amount && category) {
+                console.log('Demo: Saving expense', { amount, category, description, date });
+                alert('Expense saved! (Demo mode - not persisted)');
+                clearExpenseForm();
+            }
+        }
+
+        function clearExpenseForm() {
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-category').value = '';
+            document.getElementById('expense-description').value = '';
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('diary-date').value = today;
+            document.getElementById('mood-date').value = today;
+            document.getElementById('expense-date').value = today;
+            
+            // Hide loading and show login after brief delay
+            setTimeout(() => {
+                hideElement('loading');
+                showElement('login-screen');
+                console.log('Demo initialized. External dependencies (Firebase, Alpine.js) not required.');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubinix - Local Demo</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Local Alpine.js for demo purposes -->
+    <script>
+        // Minimal Alpine.js-like functionality for demo
+        window.Alpine = {
+            data: function(name, factory) {
+                window[name] = factory;
+            },
+            init: function() {
+                // Initialize demo
+                if (window.appData) {
+                    const app = window.appData();
+                    app.init();
+                    window.demoApp = app;
+                }
+            }
+        };
+        
+        // Mock Firebase for demo
+        window.firebase = {
+            initializeApp: () => {},
+            auth: () => ({
+                onAuthStateChanged: (callback) => {
+                    // Simulate authenticated user for demo
+                    setTimeout(() => {
+                        callback({
+                            uid: 'demo-user',
+                            email: 'demo@example.com',
+                            displayName: 'Demo User'
+                        });
+                    }, 1000);
+                },
+                createUserWithEmailAndPassword: () => Promise.resolve({}),
+                signInWithEmailAndPassword: () => Promise.resolve({}),
+                signOut: () => Promise.resolve({})
+            }),
+            firestore: () => ({
+                collection: () => ({
+                    where: () => ({
+                        orderBy: () => ({
+                            get: () => Promise.resolve({docs: []})
+                        })
+                    }),
+                    add: () => Promise.resolve({}),
+                    doc: () => ({
+                        delete: () => Promise.resolve({}),
+                        set: () => Promise.resolve({})
+                    })
+                }),
+                FieldValue: {
+                    serverTimestamp: () => new Date()
+                }
+            })
+        };
+        
+        // Mock Firebase globals
+        window.auth = window.firebase.auth();
+        window.db = window.firebase.firestore();
+        window.COLLECTIONS = {
+            USERS: 'users',
+            DIARY_ENTRIES: 'diaryEntries',
+            MOOD_ENTRIES: 'moodEntries',
+            EXPENSES: 'expenses'
+        };
+    </script>
+</head>
+<body>
+    <div id="app" class="app">
+        <div id="loading" class="loading-container" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="login-container" style="display: none;">
+            <div class="login-card card">
+                <div class="card__header">
+                    <h1>Personal Dashboard</h1>
+                    <p>Manage your daily activities in one place</p>
+                </div>
+                <div class="card__body">
+                    <div>
+                        <h2>Demo Mode</h2>
+                        <p>Click below to enter demo mode</p>
+                        <button onclick="demoLogin()" class="btn btn--primary btn--full-width">Enter Demo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <header class="header">
+                <div class="header__content">
+                    <h1>Personal Dashboard</h1>
+                    <button onclick="demoLogout()" class="btn btn--outline">Logout</button>
+                </div>
+            </header>
+            
+            <div class="container">
+                <nav class="sidebar">
+                    <div class="nav-menu">
+                        <button onclick="setModule('summary')" class="nav-item active" id="nav-summary">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-label">Summary</span>
+                        </button>
+                        <button onclick="setModule('diary')" class="nav-item" id="nav-diary">
+                            <span class="nav-icon">📔</span>
+                            <span class="nav-label">Diary</span>
+                        </button>
+                        <button onclick="setModule('mood')" class="nav-item" id="nav-mood">
+                            <span class="nav-icon">😊</span>
+                            <span class="nav-label">Mood</span>
+                        </button>
+                        <button onclick="setModule('expenses')" class="nav-item" id="nav-expenses">
+                            <span class="nav-icon">💰</span>
+                            <span class="nav-label">Expenses</span>
+                        </button>
+                    </div>
+                </nav>
+
+                <main class="main-content">
+                    <!-- Summary Module -->
+                    <div id="module-summary" class="module">
+                        <div class="module-header">
+                            <h2>Dashboard Summary</h2>
+                            <p>Overview of your daily activities</p>
+                        </div>
+                        <div class="summary-grid">
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Diary Entries</h3>
+                                    <div class="summary-stat">0 entries</div>
+                                    <p>Recent activity recorded</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Current Mood</h3>
+                                    <div class="summary-stat">😐</div>
+                                    <p>How you're feeling today</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Month Expenses</h3>
+                                    <div class="summary-stat">₹0</div>
+                                    <p>Total spending this month</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>This Week</h3>
+                                    <div class="summary-stat">0</div>
+                                    <p>Activities completed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list">
+                            <p>No recent activity</p>
+                        </div>
+                    </div>
+
+                    <!-- Other modules would be hidden initially -->
+                    <div id="module-diary" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Daily Diary</h2>
+                            <p>Record your daily thoughts and experiences</p>
+                        </div>
+                        <p>Diary functionality available in full version with Firebase setup.</p>
+                    </div>
+
+                    <div id="module-mood" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Mood Tracker</h2>
+                            <p>Track your daily emotional well-being</p>
+                        </div>
+                        <p>Mood tracking available in full version with Firebase setup.</p>
+                    </div>
+
+                    <div id="module-expenses" class="module" style="display: none;">
+                        <div class="module-header">
+                            <h2>Expense Tracker</h2>
+                            <p>Keep track of your spending habits</p>
+                        </div>
+                        <p>Expense tracking available in full version with Firebase setup.</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo functionality without external dependencies
+        let currentModule = 'summary';
+        let isAuthenticated = false;
+
+        function showElement(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function demoLogin() {
+            hideElement('login-screen');
+            showElement('dashboard');
+            isAuthenticated = true;
+        }
+
+        function demoLogout() {
+            hideElement('dashboard');
+            showElement('login-screen');
+            isAuthenticated = false;
+        }
+
+        function setModule(module) {
+            // Hide all modules
+            document.querySelectorAll('.module').forEach(m => m.style.display = 'none');
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Show selected module
+            showElement('module-' + module);
+            // Add active class to selected nav item
+            document.getElementById('nav-' + module).classList.add('active');
+            
+            currentModule = module;
+        }
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show login screen initially
+            showElement('login-screen');
+            
+            console.log('Demo mode initialized. Click "Enter Demo" to see the dashboard.');
+        });
+    </script>
+</body>
+</html>

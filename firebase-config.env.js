@@ -3,6 +3,15 @@
 // Safe for production deployment with GitHub Actions and secrets
 
 (function() {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+        console.warn("Firebase not available, initializing demo mode");
+        if (typeof initDemoMode === 'function') {
+            initDemoMode();
+        }
+        return;
+    }
+
     // Firebase configuration from environment variables
     // These will be injected during build/deployment process
     const firebaseConfig = {
@@ -17,22 +26,31 @@
     // Validate configuration
     if (firebaseConfig.apiKey === "placeholder-api-key") {
         console.warn("Firebase configuration not properly set. Please configure environment variables.");
+        console.info("For local development, copy firebase-config.template.js to firebase-config.js and configure with your Firebase credentials.");
     }
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    try {
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
 
-    // Initialize services
-    window.auth = firebase.auth();
-    window.db = firebase.firestore();
+        // Initialize services
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
 
-    // Collection names
-    window.COLLECTIONS = {
-        USERS: 'users',
-        DIARY_ENTRIES: 'diaryEntries',
-        MOOD_ENTRIES: 'moodEntries',
-        EXPENSES: 'expenses'
-    };
+        // Collection names
+        window.COLLECTIONS = {
+            USERS: 'users',
+            DIARY_ENTRIES: 'diaryEntries',
+            MOOD_ENTRIES: 'moodEntries',
+            EXPENSES: 'expenses'
+        };
 
-    console.log("Firebase initialized with project:", firebaseConfig.projectId);
+        console.log("Firebase initialized with project:", firebaseConfig.projectId);
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+        console.warn("Falling back to demo mode");
+        if (typeof initDemoMode === 'function') {
+            initDemoMode();
+        }
+    }
 })();
