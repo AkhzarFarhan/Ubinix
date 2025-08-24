@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="app.js"></script>
+</head>
+<body>
+    <div x-data="appData" x-init="init()" class="app">
+        <!-- Loading Screen -->
+        <div x-show="loading" class="loading-container">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Login Screen -->
+        <div x-show="!isAuthenticated && !loading" x-transition class="login-container">
+            <div class="login-card card">
+                <div class="card__header">
+                    <h1>Personal Dashboard</h1>
+                    <p>Manage your daily activities in one place</p>
+                </div>
+                <div class="card__body">
+                    <div x-show="!showRegister">
+                        <h2>Sign In</h2>
+                        <form @submit.prevent="login">
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" x-model="loginForm.email" class="form-control" placeholder="Enter email" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" x-model="loginForm.password" class="form-control" placeholder="Enter password" required>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn--primary btn--full-width">Sign In</button>
+                            </div>
+                            <p class="text-center">
+                                Don't have an account? 
+                                <a href="#" @click.prevent="showRegister = true">Sign up</a>
+                            </p>
+                        </form>
+                    </div>
+
+                    <div x-show="showRegister">
+                        <h2>Create Account</h2>
+                        <form @submit.prevent="register">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" x-model="registerForm.username" class="form-control" placeholder="Choose username" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" x-model="registerForm.email" class="form-control" placeholder="Enter email" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" x-model="registerForm.password" class="form-control" placeholder="Create password" required>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn--primary btn--full-width">Create Account</button>
+                            </div>
+                            <p class="text-center">
+                                Already have an account? 
+                                <a href="#" @click.prevent="showRegister = false">Sign in</a>
+                            </p>
+                        </form>
+                    </div>
+
+                    <div x-show="authError" class="error-message" x-text="authError"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div x-show="isAuthenticated && !loading" x-transition class="dashboard">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1>Personal Dashboard</h1>
+                    <div class="header-actions">
+                        <span x-text="'Welcome, ' + currentUser?.username"></span>
+                        <button @click="logout" class="btn btn--secondary btn--sm">Logout</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-layout">
+                <!-- Sidebar -->
+                <nav class="sidebar">
+                    <div class="nav-menu">
+                        <button @click="setCurrentModule('summary')" 
+                                :class="{'active': currentModule === 'summary'}"
+                                class="nav-item">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-label">Summary</span>
+                        </button>
+                        <button @click="setCurrentModule('diary')" 
+                                :class="{'active': currentModule === 'diary'}"
+                                class="nav-item">
+                            <span class="nav-icon">📔</span>
+                            <span class="nav-label">Diary</span>
+                        </button>
+                        <button @click="setCurrentModule('mood')" 
+                                :class="{'active': currentModule === 'mood'}"
+                                class="nav-item">
+                            <span class="nav-icon">😊</span>
+                            <span class="nav-label">Mood</span>
+                        </button>
+                        <button @click="setCurrentModule('expenses')" 
+                                :class="{'active': currentModule === 'expenses'}"
+                                class="nav-item">
+                            <span class="nav-icon">💰</span>
+                            <span class="nav-label">Expenses</span>
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Main Content -->
+                <main class="main-content">
+                    <!-- Summary Module -->
+                    <div x-show="currentModule === 'summary'" class="module">
+                        <div class="module-header">
+                            <h2>Dashboard Summary</h2>
+                            <p>Overview of your daily activities</p>
+                        </div>
+                        <div class="summary-grid">
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Diary Entries</h3>
+                                    <div class="summary-stat" x-text="diaryEntries.length + ' entries'"></div>
+                                    <p>Recent activity recorded</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Current Mood</h3>
+                                    <div class="summary-stat" x-text="getLatestMood()?.mood_emoji || '😐'"></div>
+                                    <p x-text="'Rating: ' + (getLatestMood()?.mood_rating || 'Not set')"></p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>Month Expenses</h3>
+                                    <div class="summary-stat" x-text="'₹' + getMonthlyExpenses()"></div>
+                                    <p>Total spending this month</p>
+                                </div>
+                            </div>
+                            <div class="summary-card card">
+                                <div class="card__body">
+                                    <h3>This Week</h3>
+                                    <div class="summary-stat" x-text="getWeeklyActivity()"></div>
+                                    <p>Activities completed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="recent-activity">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-list">
+                                <template x-for="activity in getRecentActivity()" :key="activity.id">
+                                    <div class="activity-item">
+                                        <span class="activity-icon" x-text="activity.icon"></span>
+                                        <div class="activity-content">
+                                            <div class="activity-title" x-text="activity.title"></div>
+                                            <div class="activity-date" x-text="activity.date"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diary Module -->
+                    <div x-show="currentModule === 'diary'" class="module">
+                        <div class="module-header">
+                            <h2>Daily Diary</h2>
+                            <p>Record your daily thoughts and experiences</p>
+                        </div>
+                        <div class="diary-actions">
+                            <button @click="showDiaryForm = !showDiaryForm" class="btn btn--primary">
+                                <span x-text="showDiaryForm ? 'Cancel' : 'New Entry'"></span>
+                            </button>
+                        </div>
+
+                        <div x-show="showDiaryForm" class="diary-form card">
+                            <div class="card__body">
+                                <form @submit.prevent="saveDiaryEntry">
+                                    <div class="form-group">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" x-model="diaryForm.date" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" x-model="diaryForm.title" class="form-control" placeholder="Entry title" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Content</label>
+                                        <textarea x-model="diaryForm.content" class="form-control" rows="6" placeholder="Write your thoughts..."></textarea>
+                                        <div class="character-count" x-text="'Characters: ' + (diaryForm.content?.length || 0)"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn--primary">Save Entry</button>
+                                        <button type="button" @click="resetDiaryForm" class="btn btn--secondary">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="diary-entries">
+                            <template x-for="entry in diaryEntries" :key="entry.id">
+                                <div class="diary-entry card">
+                                    <div class="card__header">
+                                        <h3 x-text="entry.title"></h3>
+                                        <span class="entry-date" x-text="formatDate(entry.date)"></span>
+                                    </div>
+                                    <div class="card__body">
+                                        <p x-text="entry.content"></p>
+                                        <div class="entry-actions">
+                                            <button @click="editDiaryEntry(entry)" class="btn btn--secondary btn--sm">Edit</button>
+                                            <button @click="deleteDiaryEntry(entry.id)" class="btn btn--outline btn--sm">Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Mood Module -->
+                    <div x-show="currentModule === 'mood'" class="module">
+                        <div class="module-header">
+                            <h2>Mood Tracker</h2>
+                            <p>Track your daily emotional well-being</p>
+                        </div>
+
+                        <div class="mood-form card">
+                            <div class="card__body">
+                                <form @submit.prevent="saveMoodEntry">
+                                    <div class="form-group">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" x-model="moodForm.date" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">How are you feeling?</label>
+                                        <div class="mood-selector">
+                                            <template x-for="mood in moodOptions" :key="mood.rating">
+                                                <button type="button" 
+                                                        @click="selectMood(mood)"
+                                                        :class="{'selected': moodForm.mood_rating === mood.rating}"
+                                                        class="mood-option">
+                                                    <span class="mood-emoji" x-text="mood.emoji"></span>
+                                                    <span class="mood-rating" x-text="mood.rating"></span>
+                                                    <span class="mood-label" x-text="mood.label"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Notes (optional)</label>
+                                        <textarea x-model="moodForm.notes" class="form-control" rows="3" placeholder="Any additional thoughts..."></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn--primary">Save Mood</button>
+                                        <button type="button" @click="resetMoodForm" class="btn btn--secondary">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="mood-history">
+                            <h3>Mood History</h3>
+                            <template x-for="entry in moodEntries" :key="entry.id">
+                                <div class="mood-entry card">
+                                    <div class="card__body">
+                                        <div class="mood-entry-header">
+                                            <span class="mood-display">
+                                                <span class="mood-emoji" x-text="entry.mood_emoji"></span>
+                                                <span class="mood-rating" x-text="'Rating: ' + entry.mood_rating"></span>
+                                            </span>
+                                            <span class="entry-date" x-text="formatDate(entry.date)"></span>
+                                        </div>
+                                        <p x-show="entry.notes" x-text="entry.notes"></p>
+                                        <button @click="deleteMoodEntry(entry.id)" class="btn btn--outline btn--sm">Delete</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Expenses Module -->
+                    <div x-show="currentModule === 'expenses'" class="module">
+                        <div class="module-header">
+                            <h2>Expense Tracker</h2>
+                            <p>Keep track of your spending habits</p>
+                        </div>
+
+                        <div class="expense-summary">
+                            <div class="summary-stats">
+                                <div class="stat-item">
+                                    <span class="stat-value" x-text="'₹' + getTotalExpenses()"></span>
+                                    <span class="stat-label">Total Expenses</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value" x-text="'₹' + getMonthlyExpenses()"></span>
+                                    <span class="stat-label">This Month</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="expense-form card">
+                            <div class="card__body">
+                                <form @submit.prevent="saveExpense">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" x-model="expenseForm.date" class="form-control" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Amount (₹)</label>
+                                            <input type="number" x-model="expenseForm.amount" class="form-control" step="0.01" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Category</label>
+                                            <select x-model="expenseForm.category" class="form-control" required>
+                                                <option value="">Select category</option>
+                                                <template x-for="category in expenseCategories" :key="category">
+                                                    <option :value="category" x-text="category"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Description</label>
+                                            <input type="text" x-model="expenseForm.description" class="form-control" placeholder="What did you spend on?">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn--primary">Add Expense</button>
+                                        <button type="button" @click="resetExpenseForm" class="btn btn--secondary">Clear</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="expenses-list">
+                            <h3>Recent Expenses</h3>
+                            <template x-for="expense in expenses" :key="expense.id">
+                                <div class="expense-item card">
+                                    <div class="card__body">
+                                        <div class="expense-header">
+                                            <div class="expense-info">
+                                                <span class="expense-amount">₹<span x-text="expense.amount"></span></span>
+                                                <span class="expense-category status" x-text="expense.category"></span>
+                                            </div>
+                                            <span class="expense-date" x-text="formatDate(expense.date)"></span>
+                                        </div>
+                                        <p x-show="expense.description" x-text="expense.description"></p>
+                                        <button @click="deleteExpense(expense.id)" class="btn btn--outline btn--sm">Delete</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
