@@ -99,7 +99,20 @@ service cloud.firestore {
 
 **Note**: The actual `firebase-config.js` file is excluded from version control for security reasons.
 
-### 5. Test User (Optional)
+### 5. Production Deployment
+
+For production deployment using environment variables (recommended for GitHub hosting):
+
+**Option A: Firebase Hosting with GitHub Actions**
+- See [ENVIRONMENT_DEPLOYMENT.md](ENVIRONMENT_DEPLOYMENT.md) for detailed instructions
+- Uses GitHub Secrets for secure configuration
+- Automated deployment on push to main branch
+
+**Option B: GitHub Pages**
+- See [ENVIRONMENT_DEPLOYMENT.md](ENVIRONMENT_DEPLOYMENT.md) for setup instructions
+- Alternative hosting method using GitHub Pages
+
+### 6. Test User (Optional)
 
 For testing purposes, you can create a test account:
 - Email: demo@example.com
@@ -114,12 +127,15 @@ ubinix/
 ├── style.css                    # CSS styles
 ├── firebase-config.template.js  # Firebase configuration template (safe to commit)
 ├── firebase-config.js           # Firebase configuration (DO NOT COMMIT - in .gitignore)
+├── firebase-config.env.js       # Environment-based Firebase configuration (for deployment)
 ├── firebase.json                # Firebase project configuration
 ├── firestore.rules              # Firestore security rules
 ├── firestore.indexes.json       # Firestore database indexes
+├── .github/workflows/           # GitHub Actions workflows for deployment
 ├── .gitignore                   # Git ignore file
 ├── README.md                    # Project documentation
-├── DEPLOYMENT.md                # Deployment guide
+├── DEPLOYMENT.md                # Firebase deployment guide
+├── ENVIRONMENT_DEPLOYMENT.md    # Environment variables deployment guide
 └── LICENSE                      # License file
 ```
 

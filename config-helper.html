@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubinix Configuration Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .option { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .option h3 { color: #2c3e50; margin-top: 0; }
+        .recommended { border-color: #27ae60; background-color: #f8fff8; }
+        .code { background-color: #f4f4f4; padding: 10px; border-radius: 4px; font-family: monospace; }
+        .status { padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .status.local { background-color: #3498db; color: white; }
+        .status.deployed { background-color: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Ubinix Firebase Configuration</h1>
+    <p>Choose your deployment method:</p>
+
+    <div class="option recommended">
+        <h3>🚀 Option 1: Environment Variables (Recommended) <span class="status deployed">For Production</span></h3>
+        <p><strong>Best for:</strong> Public repositories, team collaboration, automated deployment</p>
+        <ul>
+            <li>✅ Secure: Firebase keys stored in GitHub Secrets</li>
+            <li>✅ Automated deployment to Firebase Hosting or GitHub Pages</li>
+            <li>✅ No sensitive data in repository</li>
+            <li>✅ Easy team collaboration</li>
+        </ul>
+        <p><strong>Setup:</strong> See <a href="FIREBASE_CONFIG_GUIDE.md">FIREBASE_CONFIG_GUIDE.md</a> for complete instructions</p>
+        <div class="code">
+            Quick start: Add your Firebase config to GitHub Secrets, then push to main branch
+        </div>
+    </div>
+
+    <div class="option">
+        <h3>💻 Option 2: Local Configuration <span class="status local">For Development</span></h3>
+        <p><strong>Best for:</strong> Local development, private repositories, testing</p>
+        <ul>
+            <li>📁 Firebase config stored locally only</li>
+            <li>🔒 File excluded from version control (.gitignore)</li>
+            <li>⚡ Quick setup for local development</li>
+        </ul>
+        <p><strong>Setup:</strong></p>
+        <div class="code">
+            cp firebase-config.template.js firebase-config.js<br>
+            # Edit firebase-config.js with your Firebase configuration
+        </div>
+    </div>
+
+    <h2>🛠️ Local Development Helper</h2>
+    <p>Run the setup script to get started quickly:</p>
+    <div class="code">
+        ./setup-env.sh
+    </div>
+
+    <h2>📚 Documentation</h2>
+    <ul>
+        <li><a href="FIREBASE_CONFIG_GUIDE.md">Complete Firebase Configuration Guide</a></li>
+        <li><a href="ENVIRONMENT_DEPLOYMENT.md">Environment Variables Deployment Guide</a></li>
+        <li><a href="DEPLOYMENT.md">Original Firebase Deployment Guide</a></li>
+        <li><a href="README.md">Project README</a></li>
+    </ul>
+
+    <script>
+        // Check current configuration
+        const hasLocalConfig = false; // We can't check file existence from browser
+        const hasEnvConfig = typeof window.FIREBASE_PROJECT_ID !== 'undefined';
+        
+        if (hasEnvConfig) {
+            document.body.innerHTML += '<div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;"><strong>✅ Environment configuration detected!</strong><br>Project ID: ' + window.FIREBASE_PROJECT_ID + '</div>';
+        } else {
+            document.body.innerHTML += '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; padding: 15px; margin: 20px 0;"><strong>⚠️ No environment configuration detected.</strong><br>Please follow the setup instructions above.</div>';
+        }
+    </script>
+</body>
+</html>
