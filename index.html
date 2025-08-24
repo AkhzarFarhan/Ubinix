@@ -6,21 +6,118 @@
     <title>Personal Dashboard</title>
     <link rel="stylesheet" href="style.css">
     
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDKs - Try multiple CDN sources for reliability -->
+    <script>
+        // Fallback loader for Firebase
+        function loadScript(src, fallbacks = []) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = () => {
+                    if (fallbacks.length > 0) {
+                        loadScript(fallbacks[0], fallbacks.slice(1)).then(resolve).catch(reject);
+                    } else {
+                        console.warn('Failed to load:', src);
+                        resolve(); // Continue without this script
+                    }
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Load Firebase scripts with fallbacks
+        Promise.all([
+            loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js', [
+                'https://unpkg.com/firebase@10.12.0/compat/firebase-app.js'
+            ]),
+            loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js', [
+                'https://unpkg.com/firebase@10.12.0/compat/firebase-auth.js'
+            ]),
+            loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js', [
+                'https://unpkg.com/firebase@10.12.0/compat/firebase-firestore.js'
+            ])
+        ]).then(() => {
+            // Load Firebase configuration after Firebase is loaded
+            const configScript = document.createElement('script');
+            configScript.src = 'firebase-config.env.js';
+            document.head.appendChild(configScript);
+        }).catch(error => {
+            console.warn('Firebase loading failed, running in demo mode:', error);
+            // Initialize demo mode
+            initDemoMode();
+        });
+    </script>
     
-    <!-- Firebase Configuration -->
-    <script src="firebase-config.env.js"></script>
+    <!-- Alpine.js with fallback -->
+    <script>
+        loadScript('https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js', [
+            'https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js'
+        ]).catch(() => {
+            console.warn('Alpine.js failed to load, initializing simple demo mode');
+        });
+    </script>
+    <!-- Demo mode initialization -->
+    <script>
+        function initDemoMode() {
+            // Create mock Firebase services
+            window.firebase = window.firebase || {
+                initializeApp: () => {},
+                auth: () => ({
+                    onAuthStateChanged: (callback) => {
+                        setTimeout(() => {
+                            callback({
+                                uid: 'demo-user',
+                                email: 'demo@example.com',
+                                displayName: 'Demo User'
+                            });
+                        }, 500);
+                    },
+                    createUserWithEmailAndPassword: () => Promise.resolve({}),
+                    signInWithEmailAndPassword: () => Promise.resolve({}),
+                    signOut: () => Promise.resolve({})
+                }),
+                firestore: () => ({
+                    collection: () => ({
+                        where: () => ({
+                            orderBy: () => ({
+                                get: () => Promise.resolve({docs: []})
+                            })
+                        }),
+                        add: () => Promise.resolve({}),
+                        doc: () => ({
+                            delete: () => Promise.resolve({}),
+                            set: () => Promise.resolve({})
+                        })
+                    }),
+                    FieldValue: {
+                        serverTimestamp: () => new Date()
+                    }
+                })
+            };
+            
+            window.auth = window.firebase.auth();
+            window.db = window.firebase.firestore();
+            window.COLLECTIONS = {
+                USERS: 'users',
+                DIARY_ENTRIES: 'diaryEntries',
+                MOOD_ENTRIES: 'moodEntries',
+                EXPENSES: 'expenses'
+            };
+            
+            console.log('Demo mode initialized');
+        }
+    </script>
     
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Standalone demo fallback when Alpine.js is not available -->
+    <script src="standalone-demo.js"></script>
+    
     <script src="app.js"></script>
 </head>
 <body>
     <div x-data="appData" x-init="init()" class="app">
         <!-- Loading Screen -->
-        <div x-show="loading" class="loading-container">
+        <div x-show="loading" class="loading-container" id="loading">
             <div class="loading-spinner">
                 <div class="spinner"></div>
                 <p>Loading...</p>
@@ -28,7 +125,7 @@
         </div>
 
         <!-- Login Screen -->
-        <div x-show="!isAuthenticated && !loading" x-transition class="login-container">
+        <div x-show="!isAuthenticated && !loading" x-transition class="login-container" id="login-screen">
             <div class="login-card card">
                 <div class="card__header">
                     <h1>Personal Dashboard</h1>
@@ -87,7 +184,7 @@
         </div>
 
         <!-- Main Dashboard -->
-        <div x-show="isAuthenticated && !loading" x-transition class="dashboard">
+        <div x-show="isAuthenticated && !loading" x-transition class="dashboard" id="dashboard">
             <!-- Header -->
             <header class="dashboard-header">
                 <div class="header-content">
@@ -105,25 +202,25 @@
                     <div class="nav-menu">
                         <button @click="setCurrentModule('summary')" 
                                 :class="{'active': currentModule === 'summary'}"
-                                class="nav-item">
+                                class="nav-item" id="nav-summary">
                             <span class="nav-icon">🏠</span>
                             <span class="nav-label">Summary</span>
                         </button>
                         <button @click="setCurrentModule('diary')" 
                                 :class="{'active': currentModule === 'diary'}"
-                                class="nav-item">
+                                class="nav-item" id="nav-diary">
                             <span class="nav-icon">📔</span>
                             <span class="nav-label">Diary</span>
                         </button>
                         <button @click="setCurrentModule('mood')" 
                                 :class="{'active': currentModule === 'mood'}"
-                                class="nav-item">
+                                class="nav-item" id="nav-mood">
                             <span class="nav-icon">😊</span>
                             <span class="nav-label">Mood</span>
                         </button>
                         <button @click="setCurrentModule('expenses')" 
                                 :class="{'active': currentModule === 'expenses'}"
-                                class="nav-item">
+                                class="nav-item" id="nav-expenses">
                             <span class="nav-icon">💰</span>
                             <span class="nav-label">Expenses</span>
                         </button>
@@ -133,7 +230,7 @@
                 <!-- Main Content -->
                 <main class="main-content">
                     <!-- Summary Module -->
-                    <div x-show="currentModule === 'summary'" class="module">
+                    <div x-show="currentModule === 'summary'" class="module" id="module-summary">
                         <div class="module-header">
                             <h2>Dashboard Summary</h2>
                             <p>Overview of your daily activities</p>
@@ -185,7 +282,7 @@
                     </div>
 
                     <!-- Diary Module -->
-                    <div x-show="currentModule === 'diary'" class="module">
+                    <div x-show="currentModule === 'diary'" class="module" id="module-diary">
                         <div class="module-header">
                             <h2>Daily Diary</h2>
                             <p>Record your daily thoughts and experiences</p>
@@ -201,15 +298,15 @@
                                 <form @submit.prevent="saveDiaryEntry">
                                     <div class="form-group">
                                         <label class="form-label">Date</label>
-                                        <input type="date" x-model="diaryForm.date" class="form-control" required>
+                                        <input type="date" x-model="diaryForm.date" id="diary-date" class="form-control" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Title</label>
-                                        <input type="text" x-model="diaryForm.title" class="form-control" placeholder="Entry title" required>
+                                        <input type="text" x-model="diaryForm.title" id="diary-title" class="form-control" placeholder="Entry title" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Content</label>
-                                        <textarea x-model="diaryForm.content" class="form-control" rows="6" placeholder="Write your thoughts..."></textarea>
+                                        <textarea x-model="diaryForm.content" id="diary-content" class="form-control" rows="6" placeholder="Write your thoughts..."></textarea>
                                         <div class="character-count" x-text="'Characters: ' + (diaryForm.content?.length || 0)"></div>
                                     </div>
                                     <div class="form-group">
@@ -240,7 +337,7 @@
                     </div>
 
                     <!-- Mood Module -->
-                    <div x-show="currentModule === 'mood'" class="module">
+                    <div x-show="currentModule === 'mood'" class="module" id="module-mood">
                         <div class="module-header">
                             <h2>Mood Tracker</h2>
                             <p>Track your daily emotional well-being</p>
@@ -251,7 +348,7 @@
                                 <form @submit.prevent="saveMoodEntry">
                                     <div class="form-group">
                                         <label class="form-label">Date</label>
-                                        <input type="date" x-model="moodForm.date" class="form-control" required>
+                                        <input type="date" x-model="moodForm.date" id="mood-date" class="form-control" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">How are you feeling?</label>
@@ -270,7 +367,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Notes (optional)</label>
-                                        <textarea x-model="moodForm.notes" class="form-control" rows="3" placeholder="Any additional thoughts..."></textarea>
+                                        <textarea x-model="moodForm.notes" id="mood-notes" class="form-control" rows="3" placeholder="Any additional thoughts..."></textarea>
                                     </div>
                                     <div class="form-group">
                                         <button type="submit" class="btn btn--primary">Save Mood</button>
@@ -301,7 +398,7 @@
                     </div>
 
                     <!-- Expenses Module -->
-                    <div x-show="currentModule === 'expenses'" class="module">
+                    <div x-show="currentModule === 'expenses'" class="module" id="module-expenses">
                         <div class="module-header">
                             <h2>Expense Tracker</h2>
                             <p>Keep track of your spending habits</p>
@@ -326,17 +423,17 @@
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label">Date</label>
-                                            <input type="date" x-model="expenseForm.date" class="form-control" required>
+                                            <input type="date" x-model="expenseForm.date" id="expense-date" class="form-control" required>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Amount (₹)</label>
-                                            <input type="number" x-model="expenseForm.amount" class="form-control" step="0.01" min="0" required>
+                                            <input type="number" x-model="expenseForm.amount" id="expense-amount" class="form-control" step="0.01" min="0" required>
                                         </div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label class="form-label">Category</label>
-                                            <select x-model="expenseForm.category" class="form-control" required>
+                                            <select x-model="expenseForm.category" id="expense-category" class="form-control" required>
                                                 <option value="">Select category</option>
                                                 <template x-for="category in expenseCategories" :key="category">
                                                     <option :value="category" x-text="category"></option>
@@ -345,7 +442,7 @@
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Description</label>
-                                            <input type="text" x-model="expenseForm.description" class="form-control" placeholder="What did you spend on?">
+                                            <input type="text" x-model="expenseForm.description" id="expense-description" class="form-control" placeholder="What did you spend on?">
                                         </div>
                                     </div>
                                     <div class="form-group">
