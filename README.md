@@ -2,6 +2,12 @@
 
 A modern personal dashboard application built with Alpine.js and Firebase. Track your daily activities including diary entries, mood tracking, and expense management.
 
+## 🚀 Quick Setup
+
+**New to the project?** Start here: **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Choose between local development or automated GitHub deployment.
+
+**Need Firebase configuration help?** Visit: **[config-helper.html](config-helper.html)** - Interactive setup guide.
+
 ## Features
 
 - **Authentication**: User registration and login with Firebase Auth
